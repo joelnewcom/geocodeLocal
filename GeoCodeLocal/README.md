@@ -10,7 +10,7 @@ First time:
 ```dotnet run "./inputFile.csv" reset zkp```
 
 
-```dotnet run ./data/swiss-addresses.csv, reset, samzurcher```
+```dotnet run ./data/swiss-addresses.csv reset samzurcher```
 
 inputFile is expected to have a header line like: contactid,zch_street,zch_streetnumber,address1_postalcode,address1_city
 

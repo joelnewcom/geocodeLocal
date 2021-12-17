@@ -36,9 +36,16 @@ namespace GeoCodeLocal
 
             int totalLines = dataLines.Count();
 
+            List<CoordinateEntry> list = new List<CoordinateEntry>();
+
             foreach (String line in dataLines)
             {
                 lineCounter++;
+                if (lineCounter % 1000 == 0)
+                {
+                    store.bulkSave(list);
+                    list = new List<CoordinateEntry>();
+                }
                 if (lineCounter % 100 == 0)
                 {
                     Console.Write(".");
@@ -98,7 +105,7 @@ namespace GeoCodeLocal
                     continue;
                 }
 
-                store.save(adress.Id, nominatinResponse[0].lat, nominatinResponse[0].lon);
+                list.Add(new CoordinateEntry(adress.Id, nominatinResponse[0].lat, nominatinResponse[0].lon));
             }
 
             stopwatch.Stop();

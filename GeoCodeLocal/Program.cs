@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-using System.Text.Json;
-using GeoCodeLocal;
+﻿using GeoCodeLocal;
 
 Console.WriteLine(@"
  _       __     __                             __                        
@@ -15,19 +13,23 @@ Console.WriteLine(@"
 
 String inputFile = "";
 String mode = "";
-if (args.Length == 1) {
+String parser = "";
+
+if (args.Length == 1)
+{
     inputFile = args[0];
     mode = "reset";
 }
 
-else if (args.Length == 2)
+else if (args.Length == 3)
 {
     inputFile = args[0];
     mode = args[1];
+    parser = args[2];
 }
 else
 {
-    Console.WriteLine("Only two arguments are accepted");
+    Console.WriteLine("Only three arguments are accepted: <inputFile> <mode>[reset:default, proceed] <parser>[zkp, samzurcher]");
     return;
 }
 
@@ -39,8 +41,27 @@ if (!System.IO.File.Exists(inputFile))
 
 if (!"reset".Equals(mode) && !"proceed".Equals(mode))
 {
-    Console.WriteLine("Only mode reset or proceed are allowed");
+    Console.WriteLine("Only mode 'reset' or 'proceed' are allowed");
     return;
 }
 
-await new Runner(inputFile, mode).run();
+if (!"zkp".Equals(parser) && !"samzurcher".Equals(parser))
+{
+    Console.WriteLine("Only parser 'zkp' or 'samzurcher' are allowed");
+    return;
+}
+
+ILineParser lineParser;
+switch (parser)
+{
+    case "zkp":
+        lineParser = new ZKPExtractParser();
+        break;
+    case "samzurcher":
+        lineParser = new SamZurcherParser();
+        break;
+    default:
+        throw new ArgumentException("no parser defined");
+}
+
+await new Runner(inputFile, mode, lineParser).run();

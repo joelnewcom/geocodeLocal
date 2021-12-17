@@ -1,13 +1,14 @@
 using System;
 using GeoCodeLocal;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 
 namespace GeoCodeLocalTest;
 
 [TestClass]
 public class RunnerTest
 {
-    Runner runner = new Runner("", "");
+    Runner runner = new Runner("", "", new Mock<ILineParser>().Object);
 
     [TestMethod]
     public void CreateQueryParamsTest()

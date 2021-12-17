@@ -3,7 +3,7 @@ internal class NominatinResponse
     public int place_id { get; set; }
     public String licence { get; set; }
     public String osm_type { get; set; }
-    public int osm_id { get; set; }
+    public long osm_id { get; set; }
 
     // boundingbox
 

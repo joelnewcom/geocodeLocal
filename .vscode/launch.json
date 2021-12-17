@@ -5,12 +5,23 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": ".NET Core Launch (console)",
+            "name": "BigDataFile",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/GeoCodeLocal/bin/Debug/net6.0/geocodeLocal.dll",
-            "args": ["./bigInputFile.csv"],
+            "args": ["./data/bigInputFile.csv", "reset", "zkp"],
+            "cwd": "${workspaceFolder}/GeoCodeLocal",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Swiss File",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/GeoCodeLocal/bin/Debug/net6.0/geocodeLocal.dll",
+            "args": ["./data/swiss-addresses.csv", "reset", "samzurcher"],
             "cwd": "${workspaceFolder}/GeoCodeLocal",
             "console": "internalConsole",
             "stopAtEntry": false

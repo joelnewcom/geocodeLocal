@@ -14,20 +14,19 @@ namespace GeoCodeLocal
         private string inputFile;
         private string mode;
 
-        public Runner(string inputFile, string mode)
+        private ILineParser parser;
+
+        public Runner(string inputFile, string mode, ILineParser parser)
         {
             this.inputFile = inputFile;
             this.mode = mode;
+            this.parser = parser;
         }
 
         public async Task run()
         {
             int lineCounter = 0;
             int skippedCounter = 0;
-            String id = "";
-            String street = "";
-            String city = "";
-            String postalcode = "";
             stopwatch.Start();
             batchStopWatch.Start();
 
@@ -37,40 +36,56 @@ namespace GeoCodeLocal
 
             int totalLines = dataLines.Count();
 
-            ParallelOptions options = new ParallelOptions();
-            options.MaxDegreeOfParallelism = 1;
-
             foreach (String line in dataLines)
             {
                 lineCounter++;
-                String[] splittedLine = line.Split(",");
-                if (splittedLine.Length != 5)
+                if (lineCounter % 100 == 0)
+                {
+                    Console.Write(".");
+                }
+                if (lineCounter % 10000 == 0)
+                {
+                    batchStopWatch.Stop();
+                    Console.WriteLine("{0}/{1} lines processed within {2} ms. FailedCounter: {3}. Forecast until end of file reached: {4}",
+                    lineCounter,
+                    totalLines,
+                    batchStopWatch.ElapsedMilliseconds,
+                    skippedCounter,
+                    formatMilliseconds((totalLines - lineCounter) / LOG_EVERY_N_LINES * batchStopWatch.ElapsedMilliseconds));
+
+                    batchStopWatch.Reset();
+                    batchStopWatch.Start();
+                }
+
+                if (!parser.IsValid(line))
                 {
                     skippedCounter++;
                     continue;
                 }
 
-                id = splittedLine[0];
-                street = splittedLine[1] + " " + splittedLine[2];
-                city = splittedLine[4];
-                postalcode = splittedLine[3];
+                Address adress = parser.Parse(line);
 
-
-                string? v = store.getId(id);
-                if (v != null)
-                {
-                    skippedCounter++;
-                    continue;
-                }
+                // if (store.getId(adress.Id) != null)
+                // {
+                //     skippedCounter++;
+                //     continue;
+                // }
 
                 List<NominatinResponse>? nominatinResponse = new List<NominatinResponse>();
+                HttpResponseMessage responseMessage;
                 try
                 {
                     // Make call. Here we loose time
-                    HttpResponseMessage responseMessage = await client.GetAsync(CreateQueryParams(street, city, postalcode));
+                    responseMessage = await client.GetAsync(CreateQueryParams(adress.Street, adress.City, adress.Postalcode));
                     nominatinResponse = JsonSerializer.Deserialize<List<NominatinResponse>>(await responseMessage.Content.ReadAsStringAsync());
                 }
                 catch (HttpRequestException e)
+                {
+                    Console.Write(e.Message);
+                    skippedCounter++;
+                    continue;
+                }
+                catch (JsonException e)
                 {
                     Console.Write(e.Message);
                     skippedCounter++;
@@ -80,30 +95,14 @@ namespace GeoCodeLocal
                 if (nominatinResponse is null || nominatinResponse.Count() != 1)
                 {
                     skippedCounter++;
-                    return;
+                    continue;
                 }
 
-                store.save(id, nominatinResponse[0].lat, nominatinResponse[0].lon);
-
-                if (lineCounter % 100 == 0)
-                {
-                    Console.Write(".");
-                }
-                if (lineCounter % 10000 == 0)
-                {
-                    batchStopWatch.Stop();
-                    Console.WriteLine("{0}/{1} lines processed within {2} ms. Forecast until end of file reached: {3}",
-                    lineCounter,
-                    totalLines,
-                    batchStopWatch.ElapsedMilliseconds,
-                    formatMilliseconds((totalLines - lineCounter) / LOG_EVERY_N_LINES * batchStopWatch.ElapsedMilliseconds));
-
-                    batchStopWatch.Reset();
-                    batchStopWatch.Start();
-                }
+                store.save(adress.Id, nominatinResponse[0].lat, nominatinResponse[0].lon);
             }
 
             stopwatch.Stop();
+            store.Close();
             Console.WriteLine("Elapsed Time is {0} ms", stopwatch.ElapsedMilliseconds);
             Console.WriteLine("There were {0} lines.", lineCounter);
             Console.WriteLine("There were {0} failures.", skippedCounter);
@@ -119,14 +118,16 @@ namespace GeoCodeLocal
                         t.Seconds,
                         t.Milliseconds);
         }
+
+        /// place_id<2005309> = highway
         public string CreateQueryParams(string street, string city, string postalcode)
         {
             int paramCounter = 0;
-            StringBuilder stringBuilder = new StringBuilder("http://localhost:8080/search");
+            StringBuilder stringBuilder = new StringBuilder("http://localhost:8080/search?exclude_place_ids=2005309,1223080,1398494,1414204,2017555,1257761,2030933,2582412,877133,1990445,2302011,867600");
 
             if (!String.IsNullOrWhiteSpace(street) && !"NULL".Equals(street))
             {
-                stringBuilder.Append("?street=" + street);
+                stringBuilder.Append("&street=" + street);
                 paramCounter++;
             }
 

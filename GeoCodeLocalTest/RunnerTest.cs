@@ -13,11 +13,11 @@ public class RunnerTest
     [TestMethod]
     public void CreateQueryParamsTest()
     {
-        Assert.AreEqual("http://localhost:8080/search?street=street&city=city&postalcode=postalcode", runner.CreateQueryParams("street", "city", "postalcode"));
-        Assert.AreEqual("http://localhost:8080/search?city=city&postalcode=postalcode", runner.CreateQueryParams("", "city", "postalcode"));
-        Assert.AreEqual("http://localhost:8080/search?postalcode=postalcode", runner.CreateQueryParams("", "", "postalcode"));
-        Assert.AreEqual("http://localhost:8080/search?street=street&postalcode=postalcode", runner.CreateQueryParams("street", "NULL", "postalcode"));
-        Assert.AreEqual("http://localhost:8080/search?street=street&postalcode=postalcode", runner.CreateQueryParams("street", null, "postalcode"));
-        Assert.AreEqual("http://localhost:8080/search?street=street&postalcode=postalcode", runner.CreateQueryParams("street", "", "postalcode"));
+        Assert.AreEqual("http://localhost:8080/search?" + Runner.EXCLUDES + "&street=street&city=city&postalcode=postalcode", runner.CreateQueryParams("street", "city", "postalcode"));
+        Assert.AreEqual("http://localhost:8080/search?" + Runner.EXCLUDES + "&city=city&postalcode=postalcode", runner.CreateQueryParams("", "city", "postalcode"));
+        Assert.AreEqual("http://localhost:8080/search?" + Runner.EXCLUDES + "&postalcode=postalcode", runner.CreateQueryParams("", "", "postalcode"));
+        Assert.AreEqual("http://localhost:8080/search?" + Runner.EXCLUDES + "&street=street&postalcode=postalcode", runner.CreateQueryParams("street", "NULL", "postalcode"));
+        Assert.AreEqual("http://localhost:8080/search?" + Runner.EXCLUDES + "&street=street&postalcode=postalcode", runner.CreateQueryParams("street", null, "postalcode"));
+        Assert.AreEqual("http://localhost:8080/search?" + Runner.EXCLUDES + "&street=street&postalcode=postalcode", runner.CreateQueryParams("street", "", "postalcode"));
     }
 }

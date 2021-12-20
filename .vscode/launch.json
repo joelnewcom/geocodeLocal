@@ -27,6 +27,39 @@
             "stopAtEntry": false
         },
         {
+            "name": "10k Swiss File",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/GeoCodeLocal/bin/Debug/net6.0/geocodeLocal.dll",
+            "args": ["./data/10k-swiss-addresses.csv", "reset", "samzurcher"],
+            "cwd": "${workspaceFolder}/GeoCodeLocal",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Reset small file",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/GeoCodeLocal/bin/Debug/net6.0/geocodeLocal.dll",
+            "args": ["./data/inputFile.csv", "reset", "zkp"],
+            "cwd": "${workspaceFolder}/GeoCodeLocal",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Proceed small file",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/GeoCodeLocal/bin/Debug/net6.0/geocodeLocal.dll",
+            "args": ["./data/inputFile.csv", "proceed", "zkp"],
+            "cwd": "${workspaceFolder}/GeoCodeLocal",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
             "name": ".NET Core Attach",
             "type": "coreclr",
             "request": "attach"

@@ -14,11 +14,11 @@ namespace GeoCodeLocal
         Stopwatch batchStopWatch = new Stopwatch();
         Store store;
         private string inputFile;
-        private string mode;
+        private Mode mode;
 
         private ILineParser parser;
 
-        public Runner(string inputFile, string mode, ILineParser parser)
+        public Runner(string inputFile, Mode mode, ILineParser parser)
         {
             this.inputFile = inputFile;
             this.mode = mode;
@@ -29,6 +29,7 @@ namespace GeoCodeLocal
         public async Task run()
         {
             int lineCounter = 0;
+            int failedCounter = 0;
             int skippedCounter = 0;
             stopwatch.Start();
             batchStopWatch.Start();
@@ -45,90 +46,97 @@ namespace GeoCodeLocal
             foreach (String line in dataLines)
             {
                 lineCounter++;
-                logging(lineCounter, skippedCounter, totalLines);
-
-                if (coordinates.Count() > 1000)
-                {
-                    store.saveBulk(coordinates);
-                    coordinates = new List<CoordinateEntry>();
-                }
-
-                if (failures.Count() > 1000)
-                {
-                    store.saveFailures(failures);
-                    failures = new List<FailureEntry>();
-                }
+                logging(lineCounter, failedCounter, totalLines);
+                coordinates = safeCoordinatesSoFarAndReset(coordinates);
+                failures = safeFailuresSoFarAndReset(failures);
 
                 if (!parser.IsValid(line))
                 {
                     failures.Add(new FailureEntry("null", line, "line is invalid", "null"));
-                    skippedCounter++;
+                    failedCounter++;
                     continue;
                 }
 
                 Address address = parser.Parse(line);
 
-                if ("proceed".Equals(mode) && store.getId(address.Id) != null)
+                if (Mode.proceed.Equals(mode) && store.getId(address.Id) != null)
                 {
-                    failures.Add(new FailureEntry("null", line, "line already stored", "null"));
                     skippedCounter++;
                     continue;
                 }
 
-                List<NominatinResponse>? nominatinResponse = new List<NominatinResponse>();
+                List<NominatimResponse>? nominatimResponse = new List<NominatimResponse>();
                 HttpResponseMessage responseMessage;
                 try
                 {
                     responseMessage = await client.GetAsync(CreateQueryParams(address.Street, address.City, address.Postalcode));
-                    nominatinResponse = JsonSerializer.Deserialize<List<NominatinResponse>>(await responseMessage.Content.ReadAsStringAsync());
+                    nominatimResponse = JsonSerializer.Deserialize<List<NominatimResponse>>(await responseMessage.Content.ReadAsStringAsync());
                 }
                 catch (HttpRequestException e)
                 {
                     failures.Add(new FailureEntry(address.Id, line, e.Message, "null"));
-                    skippedCounter++;
+                    failedCounter++;
                     continue;
                 }
                 catch (JsonException e)
                 {
                     failures.Add(new FailureEntry(address.Id, line, e.Message, "null"));
-                    skippedCounter++;
+                    failedCounter++;
                     continue;
                 }
 
-                if (nominatinResponse is null || nominatinResponse.Count() < 1)
+                if (nominatimResponse is null || nominatimResponse.Count() < 1)
                 {
                     failures.Add(new FailureEntry(address.Id, line, "no result", "null"));
-                    skippedCounter++;
+                    failedCounter++;
                     continue;
                 }
 
-                if (nominatinResponse.Count() > 1)
+                // We are interested in categories: place, building, amenity
+                nominatimResponse = nominatimResponse.Where(n => !"highway".Equals(n.category)).ToList();
+
+                if (nominatimResponse.Count() < 1)
                 {
-
-                    List<NominatinResponse> buildings = new List<NominatinResponse>();
-                    // categories: place, highway, building, amenity
-                    buildings = nominatinResponse.Where(n => !"highway".Equals(n.category)).ToList();
-
-                    if (buildings.Count != 1)
-                    {
-                        StringBuilder osmIds = new StringBuilder();
-                        foreach (NominatinResponse item in nominatinResponse)
-                        {
-                            osmIds.Append("category: " + item.category + "; osmid: " + item.osm_id + ", ");
-                        }
-                        failures.Add(new FailureEntry(address.Id, line, "more than one result", osmIds.ToString()));
-                        continue;
-                    }
-                    nominatinResponse = buildings;
+                    failures.Add(new FailureEntry(address.Id, line, "no building", "null"));
+                    failedCounter++;
+                    continue;
                 }
 
-                if (nominatinResponse[0].lat is null || nominatinResponse[0].lon is null)
+                if (nominatimResponse.Count() > 1)
+                {
+                    int sameLatitudes = nominatimResponse.Select(x => x.lat).Distinct().Count();
+                    int samelongitudes = nominatimResponse.Select(x => x.lon).Distinct().Count();
+
+                    if (sameLatitudes.Equals(nominatimResponse.Count) && samelongitudes.Equals(nominatimResponse.Count))
+                    {
+                        nominatimResponse = new List<NominatimResponse> { nominatimResponse.First() };
+                    }
+                }
+
+                if (nominatimResponse.Count != 1)
+                {
+                    StringBuilder osmIds = new StringBuilder();
+                    foreach (NominatimResponse item in nominatimResponse)
+                    {
+                        osmIds.Append("category: " + item.category + "; osmid: " + item.osm_id + ", ");
+                    }
+                    failures.Add(new FailureEntry(address.Id, line, "got more than one location", osmIds.ToString()));
+                    continue;
+                }
+
+                string? lat = nominatimResponse[0].lat;
+                string? lon = nominatimResponse[0].lon;
+
+                if (lat is not null && lon is not null)
+                {
+                    coordinates.Add(new CoordinateEntry(address.Id, lat, lon, line));
+                }
+                else
                 {
                     failures.Add(new FailureEntry(address.Id, line, "lat or long is null", "null"));
-                    skippedCounter++;
+                    failedCounter++;
                     continue;
                 }
-                coordinates.Add(new CoordinateEntry(address.Id, nominatinResponse[0].lat, nominatinResponse[0].lon, line));
             }
 
             if (coordinates.Count() > 0)
@@ -144,10 +152,33 @@ namespace GeoCodeLocal
             stopwatch.Stop();
             store.Close();
             Console.WriteLine("Elapsed Time is {0} ms", stopwatch.ElapsedMilliseconds);
-            Console.WriteLine("There were {0} lines.", lineCounter);
-            Console.WriteLine("There were {0} failures.", skippedCounter);
-            Console.WriteLine("Successrate: {0:N2} %.", 100.00 - skippedCounter * 100 / lineCounter);
+            Console.WriteLine("There were {0} lines", lineCounter);
+            Console.WriteLine("There were {0} failures", failedCounter);
+            Console.WriteLine("Tehere were {0} skipped lines", skippedCounter);
+            Console.WriteLine("Successrate {0:N2} %", ((float)lineCounter - skippedCounter - failedCounter) * 100 / ((float)lineCounter - skippedCounter));
             Console.ReadLine();
+        }
+
+        private List<FailureEntry> safeFailuresSoFarAndReset(List<FailureEntry> failures)
+        {
+            if (failures.Count() > 1000)
+            {
+                store.saveFailures(failures);
+                failures = new List<FailureEntry>();
+            }
+
+            return failures;
+        }
+
+        private List<CoordinateEntry> safeCoordinatesSoFarAndReset(List<CoordinateEntry> coordinates)
+        {
+            if (coordinates.Count() > 1000)
+            {
+                store.saveBulk(coordinates);
+                coordinates = new List<CoordinateEntry>();
+            }
+
+            return coordinates;
         }
 
         private void logging(int lineCounter, int skippedCounter, int totalLines)
@@ -182,7 +213,7 @@ namespace GeoCodeLocal
 
         /// place_id<2005309> = highway
         /// (paramCounter > 0 ? "&" : "?")
-        public string CreateQueryParams(string street, string city, string postalcode)
+        public string CreateQueryParams(string? street, string? city, string? postalcode)
         {
             int paramCounter = 0;
             StringBuilder stringBuilder = new StringBuilder("http://localhost:8080/search?" + EXCLUDES);

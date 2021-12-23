@@ -12,24 +12,25 @@ Console.WriteLine(@"
 \____/_/ /_/ /_/_/_/ /_/\___/   \____/\___/\____/\____/\____/\__,_/\___/ ");
 
 String inputFile = "";
-String mode = "";
-String parser = "";
+Mode mode;
+Parser parser;
 
 if (args.Length == 1)
 {
     inputFile = args[0];
-    mode = "reset";
+    mode = Mode.reset;
+    parser = Parser.format1;
 }
 
 else if (args.Length == 3)
 {
     inputFile = args[0];
-    mode = args[1];
-    parser = args[2];
+    mode = (Mode)Enum.Parse(typeof(Mode), args[1]);
+    parser = (Parser)Enum.Parse(typeof(Parser), args[2]);
 }
 else
 {
-    Console.WriteLine("Only three arguments are accepted: <inputFile> <mode>[reset:default, proceed] <parser>[zkp, samzurcher]");
+    Console.WriteLine("Only three arguments are accepted: <inputFile> <mode>[reset:default, proceed] <parser>[format1:default, samzurcher]");
     return;
 }
 
@@ -39,29 +40,16 @@ if (!System.IO.File.Exists(inputFile))
     return;
 }
 
-if (!"reset".Equals(mode) && !"proceed".Equals(mode))
+if (!Mode.reset.Equals(mode) && !Mode.proceed.Equals(mode))
 {
     Console.WriteLine("Only mode 'reset' or 'proceed' are allowed");
     return;
 }
 
-if (!"zkp".Equals(parser) && !"samzurcher".Equals(parser))
+if (!Parser.format1.Equals(parser) && !Parser.samzurcher.Equals(parser))
 {
-    Console.WriteLine("Only parser 'zkp' or 'samzurcher' are allowed");
+    Console.WriteLine("Only parser 'format1' or 'samzurcher' are allowed");
     return;
 }
 
-ILineParser lineParser;
-switch (parser)
-{
-    case "zkp":
-        lineParser = new ZKPExtractParser();
-        break;
-    case "samzurcher":
-        lineParser = new SamZurcherParser();
-        break;
-    default:
-        throw new ArgumentException("no parser defined");
-}
-
-await new Runner(inputFile, mode, lineParser).run();
+await new Runner(inputFile, mode, new LineParserFactory().create(parser)).run();

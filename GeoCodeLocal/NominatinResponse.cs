@@ -1,4 +1,4 @@
-internal class NominatinResponse
+internal class NominatimResponse
 {
     public int place_id { get; set; }
     public String? licence { get; set; }

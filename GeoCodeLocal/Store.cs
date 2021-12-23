@@ -9,23 +9,19 @@ namespace GeoCodeLocal
         SqliteConnection connection;
         SqliteCommand selectCommand;
         SqliteCommand insertCommand;
-
         SqliteParameter selectParam;
 
-        public Store(string mode)
+        public Store(Mode mode)
         {
             connection = new SqliteConnection("Data Source=store.db");
             connection.Open();
 
-            if (!"proceed".Equals(mode))
+            if (!Mode.proceed.Equals(mode))
             {
                 SqliteCommand dropOutputTableCommand = connection.CreateCommand();
                 dropOutputTableCommand.CommandText = "DROP TABLE IF EXISTS output";
                 dropOutputTableCommand.ExecuteNonQuery();
-            }
 
-            if (!"proceed".Equals(mode))
-            {
                 SqliteCommand dropFailureTableCommand = connection.CreateCommand();
                 dropFailureTableCommand.CommandText = "DROP TABLE IF EXISTS failures";
                 dropFailureTableCommand.ExecuteNonQuery();

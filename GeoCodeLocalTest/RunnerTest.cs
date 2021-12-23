@@ -8,7 +8,7 @@ namespace GeoCodeLocalTest;
 [TestClass]
 public class RunnerTest
 {
-    Runner runner = new Runner("", "", new Mock<ILineParser>().Object);
+    Runner runner = new Runner("", Mode.reset, new Mock<ILineParser>().Object);
 
     [TestMethod]
     public void CreateQueryParamsTest()

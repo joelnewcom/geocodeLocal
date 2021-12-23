@@ -2,9 +2,18 @@ namespace GeoCodeLocal
 {
     public class Address
     {
-        public String Id { get; set; }
-        public String Street { get; set; }
-        public String City { get; set; }
-        public String Postalcode { get; set; }
+
+        public Address(string id, string street, string city, string postalcode)
+        {
+            Postalcode = postalcode;
+            Id = id;
+            Street = street;
+            City = city;
+        }
+
+        public String Id { get; }
+        public String Street { get; }
+        public String City { get; }
+        public String Postalcode { get; }
     }
 }

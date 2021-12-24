@@ -2,17 +2,15 @@ namespace GeoCodeLocal
 {
     public class CoordinateEntry
     {
-        public CoordinateEntry(string uuid, string lat, string lon, string address)
+        public CoordinateEntry(string uuid, string address, Coordinate coordinate)
         {
             this.uuid = uuid;
-            this.lat = lat;
-            this.lon = lon;
             this.address = address;
+            this.coordinate = coordinate;
         }
 
         public String uuid { get; }
-        public String lat { get; }
-        public String lon { get; }
+        public Coordinate coordinate { get; }
         public String address { get; }
     }
 }

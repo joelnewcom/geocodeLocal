@@ -99,8 +99,8 @@ namespace GeoCodeLocal
                 foreach (CoordinateEntry entry in list)
                 {
                     uuidParam.Value = entry.uuid;
-                    latParam.Value = entry.lat;
-                    lonParam.Value = entry.lon;
+                    latParam.Value = entry.coordinate.lat;
+                    lonParam.Value = entry.coordinate.lon;
                     addressParam.Value = entry.address;
                     insertCommand.ExecuteNonQuery();
                 }

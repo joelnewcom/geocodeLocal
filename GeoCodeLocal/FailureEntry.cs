@@ -2,7 +2,7 @@ namespace GeoCodeLocal
 {
     public class FailureEntry
     {
-        public FailureEntry(string uuid, string address, String reason, String osmTypeIds)
+        public FailureEntry(string uuid, string address, String? reason, String? osmTypeIds)
         {
             this.uuid = uuid;
             this.address = address;

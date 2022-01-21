@@ -1,6 +1,12 @@
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace GeoCodeLocal
 {
@@ -37,7 +43,8 @@ namespace GeoCodeLocal
             {
 
                 iterState.iterate();
-                iterState.coordinates = safeCoordinatesSoFarAndReset(iterState.coordinates);
+                iterState.dawCoordinates = safeCoordinatesSoFarAndReset(iterState.dawCoordinates);
+                //iterState.coordinates = safeCoordinatesSoFarAndReset(iterState.coordinates);
                 iterState.failures = safeFailuresSoFarAndReset(iterState.failures);
 
                 if (!parser.IsValid(line))
@@ -62,12 +69,12 @@ namespace GeoCodeLocal
                     continue;
                 }
 
-                iterState.AddCoordinate(new CoordinateEntry(address.Id, line, resultState.coordinate));
+                iterState.AddCoordinate(new DawCoordinateEntry(address.Id, resultState.coordinate.lon, resultState.coordinate.lat, address.City, address.Street, address.Postalcode, 1));
             }
 
-            if (iterState.coordinates.Count() > 0)
+            if (iterState.dawCoordinates.Count() > 0)
             {
-                store.saveBulk(iterState.coordinates);
+                store.saveBulk(iterState.dawCoordinates);
             }
 
             if (iterState.failures.Count() > 0)
@@ -99,6 +106,18 @@ namespace GeoCodeLocal
             {
                 store.saveBulk(coordinates);
                 coordinates = new List<CoordinateEntry>();
+            }
+
+            return coordinates;
+        }
+
+        
+        private List<DawCoordinateEntry> safeCoordinatesSoFarAndReset(List<DawCoordinateEntry> coordinates)
+        {
+            if (coordinates.Count() > 1000)
+            {
+                store.saveBulk(coordinates);
+                coordinates = new List<DawCoordinateEntry>();
             }
 
             return coordinates;

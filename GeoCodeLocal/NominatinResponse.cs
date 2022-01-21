@@ -1,3 +1,5 @@
+using System;
+
 internal class NominatimResponse
 {
     public int place_id { get; set; }

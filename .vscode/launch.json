@@ -10,7 +10,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/GeoCodeLocal/bin/Debug/net6.0/geocodeLocal.dll",
-            "args": ["./data/bigInputFile.csv", "reset", "zkp"],
+            "args": ["./data/bigInputFile.csv", "reset", "format1"],
             "cwd": "${workspaceFolder}/GeoCodeLocal",
             "console": "internalConsole",
             "stopAtEntry": false
@@ -43,7 +43,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/GeoCodeLocal/bin/Debug/net6.0/geocodeLocal.dll",
-            "args": ["./data/inputFile.csv", "reset", "zkp"],
+            "args": ["./data/inputFile.csv", "reset", "format1"],
             "cwd": "${workspaceFolder}/GeoCodeLocal",
             "console": "internalConsole",
             "stopAtEntry": false
@@ -54,7 +54,18 @@
             "request": "launch",
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/GeoCodeLocal/bin/Debug/net6.0/geocodeLocal.dll",
-            "args": ["./data/inputFile.csv", "proceed", "zkp"],
+            "args": ["./data/inputFile.csv", "proceed", "format1"],
+            "cwd": "${workspaceFolder}/GeoCodeLocal",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Reset small zkp extract",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/GeoCodeLocal/bin/Debug/net6.0/geocodeLocal.dll",
+            "args": ["./data/small-zkp-extract.csv", "reset", "format1"],
             "cwd": "${workspaceFolder}/GeoCodeLocal",
             "console": "internalConsole",
             "stopAtEntry": false

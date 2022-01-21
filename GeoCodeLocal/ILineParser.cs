@@ -1,3 +1,5 @@
+using System;
+
 namespace GeoCodeLocal
 {
     public interface ILineParser

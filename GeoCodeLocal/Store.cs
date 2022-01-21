@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Microsoft.Data.Sqlite;
 
 namespace GeoCodeLocal
@@ -5,6 +7,8 @@ namespace GeoCodeLocal
     public class Store
     {
         private const string PREPARED_STMT_INSERT_RESULT = "INSERT INTO output (uuid, lat, long, address) VALUES ($uuid, $lat, $long, $address)";
+
+        private const string PREPARED_STMT_INSERT_DAW_RESULT = "INSERT INTO dawoutput (Id, CustomerId, AddressHash, Longitude, Latitude, FullAddress, City, Street, PostalCode, HouseNumber, Region, CreatedDate, ModifiedDate, Country, Results) VALUES ($Id, $CustomerId, $AddressHash, $Longitude, $Latitude, $FullAddress, $City, $Street, $PostalCode, $HouseNumber, $Region, $CreatedDate, $ModifiedDate, $Country, $Results)";
         private const string PREPARED_STMT_INSERT_FAILURE = "INSERT INTO failures (uuid, address, reason, osm_type_ids) VALUES ($uuid, $address, $reason, $osm_type_ids)";
         SqliteConnection connection;
         SqliteCommand selectCommand;
@@ -25,7 +29,32 @@ namespace GeoCodeLocal
                 SqliteCommand dropFailureTableCommand = connection.CreateCommand();
                 dropFailureTableCommand.CommandText = "DROP TABLE IF EXISTS failures";
                 dropFailureTableCommand.ExecuteNonQuery();
+
+                SqliteCommand dropDawOutputTableCommand = connection.CreateCommand();
+                dropDawOutputTableCommand.CommandText = "DROP TABLE IF EXISTS dawoutput";
+                dropDawOutputTableCommand.ExecuteNonQuery();
             }
+
+            // Id;CustomerId;AddressHash;Longitude;Latitude;FullAddress;City;Street;PostalCode;HouseNumber;Region;CreatedDate;ModifiedDate;Country;Results
+            SqliteCommand createDawTableCommand = connection.CreateCommand();
+            createDawTableCommand.CommandText = @"CREATE TABLE IF NOT EXISTS dawoutput (
+                Id text, 
+                CustomerId text, 
+                AddressHash text,
+                Longitude text,
+                Latitude text,
+                FullAddress text,
+                City text,
+                Street text,
+                PostalCode text,
+                HouseNumber text,
+                Region text,
+                CreatedDate DATETIME,
+                ModifiedDate DATETIME,
+                Country int,
+                Results int)";
+            createDawTableCommand.ExecuteNonQuery();
+
 
             SqliteCommand createOutputTableCommand = connection.CreateCommand();
             createOutputTableCommand.CommandText = "CREATE TABLE IF NOT EXISTS output (uuid varchar(20), address varchar(20), lat varchar(20), long varchar(20))";
@@ -48,9 +77,6 @@ namespace GeoCodeLocal
             selectParam = selectCommand.CreateParameter();
             selectParam.ParameterName = "$id";
             selectCommand.Parameters.Add(selectParam);
-
-            insertCommand = connection.CreateCommand();
-            insertCommand.CommandText = PREPARED_STMT_INSERT_RESULT;
         }
 
         internal String? getId(string id)
@@ -102,6 +128,99 @@ namespace GeoCodeLocal
                     latParam.Value = entry.coordinate.lat;
                     lonParam.Value = entry.coordinate.lon;
                     addressParam.Value = entry.address;
+                    insertCommand.ExecuteNonQuery();
+                }
+
+                transaction.Commit();
+            }
+        }
+
+        public void saveBulk(List<DawCoordinateEntry> list)
+        {
+            using (var transaction = connection.BeginTransaction())
+            {
+                var insertCommand = connection.CreateCommand();
+                insertCommand.CommandText = PREPARED_STMT_INSERT_DAW_RESULT;
+
+                // private const string PREPARED_STMT_INSERT_DAW_RESULT = "INSERT INTO dawoutput (Id, CustomerId, AddressHash, Longitude, Latitude, FullAddress, City, Street, PostalCode, HouseNumber, Region, CreatedDate, ModifiedDate, Country, Results) VALUES ($Id, $CustomerId, $AddressHash, $Longitude, $Latitude, $FullAddress, $City, $Street, $PostalCode, $HouseNumber, $Region, $CreatedDate, $ModifiedDate, $Country, $Results)";
+
+                var idParam = insertCommand.CreateParameter();
+                idParam.ParameterName = "$Id";
+                insertCommand.Parameters.Add(idParam);
+
+                var customerIdParam = insertCommand.CreateParameter();
+                customerIdParam.ParameterName = "$CustomerId";
+                insertCommand.Parameters.Add(customerIdParam);
+
+                var addressHashParam = insertCommand.CreateParameter();
+                addressHashParam.ParameterName = "$AddressHash";
+                insertCommand.Parameters.Add(addressHashParam);
+
+                var longitudeParam = insertCommand.CreateParameter();
+                longitudeParam.ParameterName = "$Longitude";
+                insertCommand.Parameters.Add(longitudeParam);
+
+                var latitudeParam = insertCommand.CreateParameter();
+                latitudeParam.ParameterName = "$Latitude";
+                insertCommand.Parameters.Add(latitudeParam);
+
+                var fullAddressParam = insertCommand.CreateParameter();
+                fullAddressParam.ParameterName = "$FullAddress";
+                insertCommand.Parameters.Add(fullAddressParam);
+
+                var cityParam = insertCommand.CreateParameter();
+                cityParam.ParameterName = "$City";
+                insertCommand.Parameters.Add(cityParam);
+
+                var streetParam = insertCommand.CreateParameter();
+                streetParam.ParameterName = "$Street";
+                insertCommand.Parameters.Add(streetParam);
+
+                var postalCodeParam = insertCommand.CreateParameter();
+                postalCodeParam.ParameterName = "$PostalCode";
+                insertCommand.Parameters.Add(postalCodeParam);
+
+                var houseNumberParam = insertCommand.CreateParameter();
+                houseNumberParam.ParameterName = "$HouseNumber";
+                insertCommand.Parameters.Add(houseNumberParam);
+
+                var regionParam = insertCommand.CreateParameter();
+                regionParam.ParameterName = "$Region";
+                insertCommand.Parameters.Add(regionParam);
+
+                var createdDateParam = insertCommand.CreateParameter();
+                createdDateParam.ParameterName = "$CreatedDate";
+                insertCommand.Parameters.Add(createdDateParam);
+
+                var modifiedDateParam = insertCommand.CreateParameter();
+                modifiedDateParam.ParameterName = "$ModifiedDate";
+                insertCommand.Parameters.Add(modifiedDateParam);
+
+                var countryParam = insertCommand.CreateParameter();
+                countryParam.ParameterName = "$Country";
+                insertCommand.Parameters.Add(countryParam);
+
+                var resultsParam = insertCommand.CreateParameter();
+                resultsParam.ParameterName = "$Results";
+                insertCommand.Parameters.Add(resultsParam);
+
+                foreach (DawCoordinateEntry entry in list)
+                {
+                    idParam.Value = entry.Id;
+                    customerIdParam.Value = entry.CustomerId;
+                    addressHashParam.Value = entry.AddressHash;
+                    longitudeParam.Value = entry.Longitude;
+                    latitudeParam.Value = entry.Latitude;
+                    fullAddressParam.Value = entry.FullAddress;
+                    cityParam.Value = entry.City;
+                    streetParam.Value = entry.Street;
+                    postalCodeParam.Value = entry.PostalCode;
+                    houseNumberParam.Value = entry.HouseNumber;
+                    regionParam.Value = entry.Region;
+                    createdDateParam.Value = entry.CreatedDate;
+                    modifiedDateParam.Value = entry.ModifiedDate;
+                    countryParam.Value = entry.Country;
+                    resultsParam.Value = entry.Results;
                     insertCommand.ExecuteNonQuery();
                 }
 

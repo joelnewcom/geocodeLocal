@@ -11,8 +11,11 @@ This spins up a nominatim server which downloads the osm file on startup. When w
 ```dotnet run ./data/swiss-addresses.csv reset samzurcher```
 ```dotnet run ./data/10k-swiss-addresses.csv reset samzurcher```
 
-## inputfile
-inputFile is expected to have a header line.
+```dotnet run ./data/10k-swiss-addresses.csv reset samzurcher```
+
+```dotnet run ./data/small-zkp-extract.csv reset format1```
+
+inputFile is expected to have a header line like: contactid,zch_street,zch_streetnumber,address1_postalcode,address1_city
 
 ## Params for nominatim
 

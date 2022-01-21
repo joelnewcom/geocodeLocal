@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace GeoCodeLocal
@@ -14,6 +16,8 @@ namespace GeoCodeLocal
         internal List<FailureEntry> failures { get; set; }
         private readonly int totalLines;
 
+        internal List<DawCoordinateEntry> dawCoordinates { get; set; }
+
         public IterState(int totalLines)
         {
             this.totalLines = totalLines;
@@ -22,6 +26,7 @@ namespace GeoCodeLocal
             skippedCounter = 0;
             batchStopWatch = new Stopwatch();
             coordinates = new List<CoordinateEntry>();
+            dawCoordinates = new List<DawCoordinateEntry>();
             failures = new List<FailureEntry>();
         }
 
@@ -57,6 +62,10 @@ namespace GeoCodeLocal
         internal void AddCoordinate(CoordinateEntry coordinateEntry)
         {
             coordinates.Add(coordinateEntry);
+        }
+
+        internal void AddCoordinate(DawCoordinateEntry coordinateEntry){
+            dawCoordinates.Add(coordinateEntry);
         }
 
         private void logging()

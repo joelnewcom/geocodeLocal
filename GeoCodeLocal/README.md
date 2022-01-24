@@ -10,9 +10,7 @@ This spins up a nominatim server which downloads the osm file on startup. When w
 ```dotnet run "./inputFile.csv" reset format1```
 ```dotnet run ./data/swiss-addresses.csv reset samzurcher```
 ```dotnet run ./data/10k-swiss-addresses.csv reset samzurcher```
-
 ```dotnet run ./data/10k-swiss-addresses.csv reset samzurcher```
-
 ```dotnet run ./data/small-zkp-extract.csv reset format1```
 
 inputFile is expected to have a header line like: contactid,zch_street,zch_streetnumber,address1_postalcode,address1_city
@@ -28,3 +26,12 @@ county=<county>
 state=<state>
 country=<country>
 postalcode=<postalcode>
+
+## Switzerland file
+Elapsed Time is 14183411 ms
+There were 1827606 lines
+There were 170518 failures
+There were 0 skipped lines
+Successrate 90.67 %
+
+## 

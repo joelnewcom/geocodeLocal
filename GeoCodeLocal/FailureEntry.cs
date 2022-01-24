@@ -13,8 +13,8 @@ namespace GeoCodeLocal
         }
 
         public String uuid { get; }
-        public String reason { get; }
-        public String osmTypeIds { get; }
+        public String? reason { get; }
+        public String? osmTypeIds { get; }
         public String address { get; }
     }
 }

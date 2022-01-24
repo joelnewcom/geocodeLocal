@@ -111,7 +111,7 @@ namespace GeoCodeLocal
             return coordinates;
         }
 
-        
+
         private List<DawCoordinateEntry> safeCoordinatesSoFarAndReset(List<DawCoordinateEntry> coordinates)
         {
             if (coordinates.Count() > 1000)
@@ -146,32 +146,43 @@ namespace GeoCodeLocal
             }
 
             // We are interested in categories: place, building, amenity
-            nominatimResponse = nominatimResponse.Where(n => !"highway".Equals(n.category)).ToList();
 
-            if (nominatimResponse.Count() < 1)
-            {
-                return new ResultState(null, true, "no building", "null");
-            }
 
             if (nominatimResponse.Count() > 1)
             {
-                int sameLatitudes = nominatimResponse.Select(x => x.lat).Distinct().Count();
-                int samelongitudes = nominatimResponse.Select(x => x.lon).Distinct().Count();
-
-                if (sameLatitudes.Equals(nominatimResponse.Count) && samelongitudes.Equals(nominatimResponse.Count))
+                nominatimResponse.Sort(delegate (NominatimResponse x, NominatimResponse y)
                 {
-                    nominatimResponse = new List<NominatimResponse> { nominatimResponse.First() };
-                }
+                    // 0 represent equal, 1 represents x is greater, -1 represents y is greater
+                    return x.importance > y.importance ? -1 : 1;
+                });
             }
 
+            // nominatimResponse = nominatimResponse.Where(n => !"highway".Equals(n.category)).ToList();
+
+            // if (nominatimResponse.Count() < 1)
+            // {
+            //     return new ResultState(null, true, "no building", "null");
+            // }
+
+            // if (nominatimResponse.Count() > 1)
+            // {
+            // int sameLatitudes = nominatimResponse.Select(x => x.lat).Distinct().Count();
+            // int samelongitudes = nominatimResponse.Select(x => x.lon).Distinct().Count();
+
+            // if (sameLatitudes.Equals(nominatimResponse.Count) && samelongitudes.Equals(nominatimResponse.Count))
+            // {
+            //     nominatimResponse = new List<NominatimResponse> { nominatimResponse.First() };
+            // }
+            // }
+
+            StringBuilder osmIds = new StringBuilder();
             if (nominatimResponse.Count != 1)
             {
-                StringBuilder osmIds = new StringBuilder();
                 foreach (NominatimResponse item in nominatimResponse)
                 {
                     osmIds.Append("category: " + item.category + "; osmid: " + item.osm_id + ", ");
                 }
-                return new ResultState(null, true, "got more than one location", osmIds.ToString());
+                //return new ResultState(null, true, "got more than one location", osmIds.ToString());
             }
 
             string? lat = nominatimResponse[0].lat;
@@ -179,7 +190,7 @@ namespace GeoCodeLocal
 
             if (lat is not null && lon is not null)
             {
-                return new ResultState(new Coordinate(lat, lon), false, null, null);
+                return new ResultState(new Coordinate(lat, lon), false, null, osmIds.ToString());
 
             }
             else
@@ -209,7 +220,7 @@ namespace GeoCodeLocal
         public string CreateQueryParams(string? street, string? city, string? postalcode)
         {
             int paramCounter = 0;
-            StringBuilder stringBuilder = new StringBuilder("http://localhost:8080/search?" + EXCLUDES);
+            StringBuilder stringBuilder = new StringBuilder("http://localhost:8080/search?");
 
             if (!String.IsNullOrWhiteSpace(street) && !"NULL".Equals(street))
             {
